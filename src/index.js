@@ -17,25 +17,44 @@ const debug = require('debug')('mongo-realtime:client');
  * @event MongoWebDB#op/*
  */
 class MongoWebDB extends EventEmitter {
-  constructor(url) {
+  constructor(config) {
     super();
-    this.url = url;
-    this.socket = engine(url);
-    const { socket } = this;
+    this.config = config;
 
+    debug(`creating connection ${this.config.domain}`);
+
+    this.auth().refresh()
+      .then((res) => {
+        console.log('res', res);
+        this.connect();
+      })
+      .catch((err) => {
+        console.error(err);
+      });
+  }
+
+  connect() {
+    this.socket = engine(`ws://${this.config.domain}`);
+
+    const { socket } = this;
     this.requestID = 0;
     socket.on('error', (err) => {
-      throw err;
+      debug('socket error');
+      console.log(err.type);
+      console.log(err.description);
     });
 
     this.CONNECTION_STATE = 'initialize';
 
-    socket.once('open', () => { this.CONNECTION_STATE = 'open'; });
+    socket.once('open', () => {
+      this.CONNECTION_STATE = 'open';
+      this.emit('connected', this);
+    });
     socket.on('message', data => this.handleMessage(data));
     socket.on('disconnect', () => debug('socket disconnect'));
-    socket.on('error', () => debug('socket error'));
     socket.on('close', () => debug('socket close'));
   }
+
 
   close() {
     this.socket.close();

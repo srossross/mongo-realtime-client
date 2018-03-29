@@ -12,8 +12,30 @@ class Auth extends EventEmitter {
     });
   }
 
-  get url() {
-    return this.db.url;
+  get domain() {
+    return this.db.config.authDomain || this.db.config.domain;
+  }
+
+  refresh() {
+    const opts = {
+      cache: 'no-cache',
+      credentials: 'include',
+      headers: {
+        'content-type': 'application/json',
+      },
+      method: 'POST',
+      mode: 'cors',
+      redirect: 'error',
+      // referrer: 'no-referrer', // *client, no-referrer
+    };
+    return fetch(`http://${this.domain}/auth/refresh`, opts)
+      .then(res => res.json())
+      .then((body) => {
+        if (body.errors) {
+          throw body.errors;
+        }
+        return body;
+      });
   }
 
   createUserWithEmailAndPassword(email, password) {
@@ -29,7 +51,7 @@ class Auth extends EventEmitter {
       redirect: 'error',
       // referrer: 'no-referrer', // *client, no-referrer
     };
-    return fetch(`http://${this.url}/register`, opts)
+    return fetch(`http://${this.domain}/auth/register`, opts)
       .then(res => res.json())
       .then((body) => {
         if (body.errors) {
@@ -52,7 +74,7 @@ class Auth extends EventEmitter {
       redirect: 'error',
       // referrer: 'no-referrer', // *client, no-referrer
     };
-    return fetch(`http://${this.url}/login`, opts)
+    return fetch(`http://${this.domain}/auth/login`, opts)
       .then(res => res.json())
       .then((body) => {
         if (body.loginOk) {
@@ -63,7 +85,7 @@ class Auth extends EventEmitter {
   }
 
   logout() {
-    return fetch(`http://${this.url}/logout`, {
+    return fetch(`http://${this.domain}/auth/logout`, {
       method: 'POST',
       mode: 'cors',
       redirect: 'error',
