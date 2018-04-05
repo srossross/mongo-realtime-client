@@ -9,6 +9,7 @@ const Auth = require('./auth');
 const bson = new BSON();
 const debug = require('debug')('mongo-realtime:client');
 
+const { error } = console;
 /**
  * The MongoWebDB instance
  *
@@ -24,12 +25,11 @@ class MongoWebDB extends EventEmitter {
     debug(`creating connection ${this.config.domain}`);
 
     this.auth().refresh()
-      .then((res) => {
-        console.log('res', res);
+      .then(() => {
         this.connect();
       })
       .catch((err) => {
-        console.error(err);
+        error(err);
       });
   }
 
@@ -39,9 +39,7 @@ class MongoWebDB extends EventEmitter {
     const { socket } = this;
     this.requestID = 0;
     socket.on('error', (err) => {
-      debug('socket error');
-      console.log(err.type);
-      console.log(err.description);
+      debug('socket error', err);
     });
 
     this.CONNECTION_STATE = 'initialize';
@@ -66,12 +64,13 @@ class MongoWebDB extends EventEmitter {
 
   handleMessage(message) {
     const data = bson.deserialize(Buffer.from(message));
-    if (data.handle) {
-      debug(`Recieved watch update ${data.handle}`);
-      this.emit(`handle/${data.handle}`, data);
-    } else if (data.requestID) {
-      debug(`Recieved message ${data.requestID}`);
+
+    if (data.requestID) {
+      debug(`Recieved message ${data.requestID}`, data);
       this.emit(`message/${data.requestID}`, data);
+    } else if (data.handle) {
+      debug('Recieved watch update', data.handle, data.op, data.doc);
+      this.emit(`handle/${data.handle}`, data);
     } else {
       this.emit(`op/${data.op}`, data);
     }

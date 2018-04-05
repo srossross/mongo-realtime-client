@@ -19,11 +19,11 @@ class RefBase extends EventEmitter {
 
     this.get().then(docs => this.handleInitial(docs));
 
+    debug('subscribe', this.query);
     this.watching = promise.then(({ handle }) => {
       this.handle = handle;
-      debug(`ref is subscribed ${handle}`);
+      debug(`Ref is subscribed ${handle}`);
       this.db.on(`handle/${handle}`, ({ op, doc }) => this.handleChange(op, doc));
-
       return { handle };
     });
   }

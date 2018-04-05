@@ -15,6 +15,9 @@ class Auth extends EventEmitter {
   get domain() {
     return this.db.config.authDomain || this.db.config.domain;
   }
+  get dbName() {
+    return this.db.config.dbName;
+  }
 
   refresh() {
     const opts = {
@@ -28,7 +31,7 @@ class Auth extends EventEmitter {
       redirect: 'error',
       // referrer: 'no-referrer', // *client, no-referrer
     };
-    return fetch(`http://${this.domain}/auth/refresh`, opts)
+    return fetch(`http://${this.domain}/auth/refresh?dbName=${this.dbName}`, opts)
       .then(res => res.json())
       .then((body) => {
         if (body.errors) {
@@ -40,7 +43,7 @@ class Auth extends EventEmitter {
 
   createUserWithEmailAndPassword(email, password) {
     const opts = {
-      body: JSON.stringify({ email, password }),
+      body: JSON.stringify({ email, password, dbName: this.dbName }),
       cache: 'no-cache',
       credentials: 'include',
       headers: {
@@ -63,7 +66,7 @@ class Auth extends EventEmitter {
 
   loginWithEmailAndPassword(email, password) {
     const opts = {
-      body: JSON.stringify({ email, password }),
+      body: JSON.stringify({ email, password, dbName: this.dbName }),
       cache: 'no-cache',
       credentials: 'include',
       headers: {

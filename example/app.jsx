@@ -13,12 +13,14 @@ export default class App extends React.Component {
     });
 
     this.ref.on('changed', (doc) => {
-      this.setState({ value: doc.value });
+      if (doc) {
+        this.setState({ value: doc.value });
+      }
     });
     this.ref.subscribe();
-    this.ref.get().then((doc) => {
-      this.setState({ value: doc ? doc.value : 'undefined' });
-    });
+    // this.ref.get().then((doc) => {
+    //   this.setState({ value: doc ? doc.value : 'undefined' });
+    // });
   }
 
   changeMe(e) {

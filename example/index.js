@@ -6,6 +6,7 @@ import App from './app';
 const db = new MongoWebDB({
   domain: 'localhost:4444',
   authDomain: 'localhost:3333',
+  dbName: 'example',
 });
 
 db.on('connected', () => {
