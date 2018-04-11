@@ -2,6 +2,18 @@ const EventEmitter = require('events');
 
 const debug = require('debug')('mongo-realtime:auth');
 
+const opts = (method = 'GET', body = null) => ({
+  body: body ? JSON.stringify(body) : undefined,
+  cache: 'no-cache',
+  credentials: 'include',
+  headers: {
+    'content-type': 'application/json',
+  },
+  method,
+  mode: 'cors',
+  redirect: 'error',
+});
+
 class Auth extends EventEmitter {
   constructor(db) {
     super();
@@ -18,20 +30,13 @@ class Auth extends EventEmitter {
   get dbName() {
     return this.db.config.dbName;
   }
+  get dbID() {
+    return this.db.config.dbID;
+  }
 
   refresh() {
-    const opts = {
-      cache: 'no-cache',
-      credentials: 'include',
-      headers: {
-        'content-type': 'application/json',
-      },
-      method: 'POST',
-      mode: 'cors',
-      redirect: 'error',
-      // referrer: 'no-referrer', // *client, no-referrer
-    };
-    return fetch(`http://${this.domain}/auth/refresh?dbName=${this.dbName}`, opts)
+    const query = `dbID=${this.dbID}&dbName=${this.dbName}`;
+    return fetch(`http://${this.domain}/auth/refresh?${query}`, opts('POST'))
       .then(res => res.json())
       .then((body) => {
         if (body.errors) {
@@ -42,19 +47,9 @@ class Auth extends EventEmitter {
   }
 
   createUserWithEmailAndPassword(email, password) {
-    const opts = {
-      body: JSON.stringify({ email, password, dbName: this.dbName }),
-      cache: 'no-cache',
-      credentials: 'include',
-      headers: {
-        'content-type': 'application/json',
-      },
-      method: 'POST',
-      mode: 'cors',
-      redirect: 'error',
-      // referrer: 'no-referrer', // *client, no-referrer
-    };
-    return fetch(`http://${this.domain}/auth/register`, opts)
+    return fetch(`http://${this.domain}/auth/register`, opts('POST', {
+      email, password, dbName: this.dbName, dbID: this.dbID,
+    }))
       .then(res => res.json())
       .then((body) => {
         if (body.errors) {
@@ -65,19 +60,9 @@ class Auth extends EventEmitter {
   }
 
   loginWithEmailAndPassword(email, password) {
-    const opts = {
-      body: JSON.stringify({ email, password, dbName: this.dbName }),
-      cache: 'no-cache',
-      credentials: 'include',
-      headers: {
-        'content-type': 'application/json',
-      },
-      method: 'POST',
-      mode: 'cors',
-      redirect: 'error',
-      // referrer: 'no-referrer', // *client, no-referrer
-    };
-    return fetch(`http://${this.domain}/auth/login`, opts)
+    return fetch(`http://${this.domain}/auth/login`, opts('POST', {
+      email, password, dbName: this.dbName, dbID: this.dbID,
+    }))
       .then(res => res.json())
       .then((body) => {
         if (body.loginOk) {
@@ -88,13 +73,7 @@ class Auth extends EventEmitter {
   }
 
   logout() {
-    return fetch(`http://${this.domain}/auth/logout`, {
-      method: 'POST',
-      mode: 'cors',
-      redirect: 'error',
-      cache: 'no-cache',
-      credentials: 'include',
-    })
+    return fetch(`http://${this.domain}/auth/logout`, opts('POST'))
       .then((res) => {
         if (res.status !== 200) {
           throw new Error({ message: 'invalid logout', res });
