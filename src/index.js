@@ -1,7 +1,11 @@
-// const fetch = require('node-fetch');
+// @flow
+
+import type { Cmd } from './collection';
+
 const BSON = require('bson');
 const engine = require('engine.io-client');
 const EventEmitter = require('events');
+// $FlowFixMe
 const { Buffer } = require('buffer');
 const MongoWebCollection = require('./collection');
 const Auth = require('./auth');
@@ -10,6 +14,11 @@ const bson = new BSON();
 const debug = require('debug')('mongo-realtime:client');
 
 const { error } = console;
+
+type Config = {
+  domain: string,
+};
+
 /**
  * The MongoWebDB instance
  *
@@ -18,10 +27,16 @@ const { error } = console;
  * @event MongoWebDB#op/*
  */
 class MongoWebDB extends EventEmitter {
-  constructor(config) {
+  config: Config;
+  authObj: Auth;
+  socket: any;
+  requestID: number;
+  CONNECTION_STATE: ('initialize' | 'open');
+
+  constructor(config: Config) {
     super();
     this.config = config;
-
+    this.requestID = 1;
     debug(`creating connection ${this.config.domain}`);
 
     this.auth().refresh()
@@ -37,7 +52,7 @@ class MongoWebDB extends EventEmitter {
     this.socket = engine(`ws://${this.config.domain}`);
 
     const { socket } = this;
-    this.requestID = 0;
+
     socket.on('error', (err) => {
       debug('socket error', err);
     });
@@ -53,16 +68,15 @@ class MongoWebDB extends EventEmitter {
     socket.on('close', () => debug('socket close'));
   }
 
-
   close() {
     this.socket.close();
   }
 
-  collection(name) {
+  collection(name: string): MongoWebCollection {
     return new MongoWebCollection(this, name);
   }
 
-  handleMessage(message) {
+  handleMessage(message: Buffer) {
     const data = bson.deserialize(Buffer.from(message));
 
     if (data.requestID) {
@@ -72,23 +86,24 @@ class MongoWebDB extends EventEmitter {
       debug('Recieved watch update', data.handle, data.op, data.doc);
       this.emit(`handle/${data.handle}`, data);
     } else {
+      debug('Recieved op', data);
       this.emit(`op/${data.op}`, data);
     }
   }
 
-  executeCommand(cmd, callback) {
-    const req = Object.assign({
-      requestID: this.requestID += 1,
-    }, cmd);
-    debug(`Execute command (id:${req.requestID})`, cmd);
+  executeCommand(cmd: Cmd, callback: any): Promise<any> {
+    cmd.requestID = this.requestID; // eslint-disable-line no-param-reassign
+    this.requestID += 1;
 
-    this.socket.send(bson.serialize(req));
+    debug(`Execute command (id:${cmd.requestID})`, cmd);
+
+    this.socket.send(bson.serialize(cmd));
 
     const promise = new Promise((resolve, reject) => {
-      this.once(`message/${req.requestID}`, (data) => {
+      this.once(`message/${cmd.requestID || 0}`, (data) => {
         debug(`Command result (id:${data.requestID})`);
         if (callback) {
-          callback(data.error, data.result, req.requestID);
+          callback(data.error, data.result, cmd.requestID);
         }
         if (data.error) {
           reject(data.error);
@@ -97,12 +112,12 @@ class MongoWebDB extends EventEmitter {
         }
       });
     });
-
-    promise.requestID = req.requestID;
+    // $FlowFixMe
+    promise.requestID = cmd.requestID;
     return promise;
   }
 
-  auth() {
+  auth(): Auth {
     if (!this.authObj) {
       this.authObj = new Auth(this);
     }

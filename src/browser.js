@@ -1,3 +1,4 @@
+// @flow
 
 const MongoWebDB = require('./index');
 

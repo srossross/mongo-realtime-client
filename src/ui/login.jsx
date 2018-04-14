@@ -35,7 +35,8 @@ export default class Login extends React.Component {
     }
   }
 
-  handleSubmit = () => {
+  handleSubmit = (e) => {
+    e.preventDefault();
     this.props.auth.loginWithEmailAndPassword(this.state.email, this.state.password)
       .then(() => this.handleLogin())
       .catch((err) => {
@@ -54,29 +55,35 @@ export default class Login extends React.Component {
   render() {
     return (
       <div>
-        <TextField
-          hintText="Email"
-          type="email"
-          style={{ width: '100%', marginBottom: '12px' }}
-          value={this.state.email}
-          errorText={this.state.emailError}
-          onChange={e => this.setState({ email: e.target.value, emailError: null })}
-        />
-        <TextField
-          hintText="Password"
-          type="password"
-          style={{ width: '100%', marginBottom: '12px' }}
-          value={this.state.password}
-          errorText={this.state.passwordError}
-          onChange={e => this.setState({ password: e.target.value, passwordError: null })}
-        />
-        <RaisedButton
-          label="Login"
-          primary
-          keyboardFocused
-          fullWidth
-          onClick={this.handleSubmit}
-        />
+        <form>
+          <TextField
+            hintText="Email"
+            type="email"
+            id="email"
+            name="email"
+            style={{ width: '100%', marginBottom: '12px' }}
+            value={this.state.email}
+            errorText={this.state.emailError}
+            onChange={e => this.setState({ email: e.target.value, emailError: null })}
+          />
+          <TextField
+            hintText="Password"
+            type="password"
+            id="password"
+            name="password"
+            style={{ width: '100%', marginBottom: '12px' }}
+            value={this.state.password}
+            errorText={this.state.passwordError}
+            onChange={e => this.setState({ password: e.target.value, passwordError: null })}
+          />
+          <RaisedButton
+            label="Login"
+            primary
+            keyboardFocused
+            fullWidth
+            onClick={this.handleSubmit}
+          />
+        </form>
         <div style={{ textAlign: 'center', padding: '12px' }}>
             Not registered? <a href="register" onClick={this.handleChangeType}>Create an account.</a>
         </div>

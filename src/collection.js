@@ -1,12 +1,33 @@
-const { Ref, RefOne } = require('./ref');
+/* @flow */
+import MongoWebDB from './index';
 
+const { Ref, RefOne } = require('./ref');
 /**
  * Mongo web collection
  * @param {MongoWebDB} db - the parent db
  * @param {string} collection - the collection to operate on
  */
+
+export type OPS = (
+  'insertOne' | 'updateOne' | 'updateMany' | 'findOne' | 'find' |
+  'remove' | 'count' |
+  'unwatch' | 'watchQuery'
+);
+export type Cmd = {
+  requestID?: number,
+  collection: string,
+  op: OPS,
+  doc?: Object,
+  query?: Object,
+  update?: Object,
+  options?: ?Object,
+};
+
 class MongoWebCollection {
-  constructor(db, collection) {
+  db: MongoWebDB;
+  collection: string;
+
+  constructor(db: MongoWebDB, collection: string) {
     this.db = db;
     this.collection = collection;
   }
@@ -19,7 +40,7 @@ class MongoWebCollection {
    * db.collection('eggs').insertOne({ shell: true })
    * console.log(result);
    */
-  insertOne(doc, options) {
+  insertOne(doc: Object, options: ?Object) {
     return this.db.executeCommand({
       collection: this.collection,
       op: 'insertOne',
@@ -28,7 +49,7 @@ class MongoWebCollection {
     });
   }
 
-  updateOne(query, update, options) {
+  updateOne(query: Object, update: Object, options: ?Object) {
     return this.db.executeCommand({
       collection: this.collection,
       op: 'updateOne',
@@ -37,7 +58,7 @@ class MongoWebCollection {
       options,
     });
   }
-  updateMany(query, update, options) {
+  updateMany(query: Object, update: Object, options: ?Object) {
     return this.db.executeCommand({
       collection: this.collection,
       op: 'updateMany',
@@ -47,7 +68,7 @@ class MongoWebCollection {
     });
   }
 
-  findOne(query, options) {
+  findOne(query: Object, options: ?Object) {
     return this.db.executeCommand({
       collection: this.collection,
       op: 'findOne',
@@ -56,7 +77,7 @@ class MongoWebCollection {
     });
   }
 
-  find(query, options) {
+  find(query: Object, options: ?Object) {
     return this.db.executeCommand({
       collection: this.collection,
       op: 'find',
@@ -65,7 +86,7 @@ class MongoWebCollection {
     });
   }
 
-  remove(query, options) {
+  remove(query: Object, options: ?Object) {
     return this.db.executeCommand({
       collection: this.collection,
       op: 'remove',
@@ -74,22 +95,23 @@ class MongoWebCollection {
     });
   }
 
-  count(query, callback) {
+  count(query: Object) {
     return this.db.executeCommand({
       collection: this.collection,
       op: 'count',
+      options: {},
       query,
-    }, callback);
+    });
   }
 
-  ref(IdOrQuery) {
+  ref(IdOrQuery: any) {
     if (typeof IdOrQuery === 'object') {
       return new Ref(this.db, this.collection, IdOrQuery);
     }
     return new RefOne(this.db, this.collection, IdOrQuery);
   }
 
-  unwatch(requestID) {
+  unwatch(requestID: number) {
     return this.db.executeCommand({
       collection: this.collection,
       op: 'unwatch',

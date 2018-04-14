@@ -44,7 +44,8 @@ export default class Login extends React.Component {
     }
   }
 
-  handleSubmit = () => {
+  handleSubmit = (e) => {
+    e.preventDefault();
     if (this.state.submitted || this.anyInvalid) {
       return;
     }
@@ -98,40 +99,47 @@ export default class Login extends React.Component {
   render() {
     return (
       <div>
-        <TextField
-          hintText="Email"
-          type="email"
-          style={{ width: '100%', marginBottom: '12px' }}
-          value={this.state.email}
-          errorText={this.state.emailError}
-          onChange={this.handleUpdateEmail}
-          onBlur={this.validateEmail}
-        />
-        <TextField
-          hintText="Password"
-          type="password"
-          style={{ width: '100%', marginBottom: '12px' }}
-          value={this.state.password}
-          errorText={this.state.passwordError}
+        <form>
 
-          onChange={e => this.setState({ password: e.target.value })}
-        />
-        <TextField
-          hintText="Confirm Password"
-          type="password"
-          style={{ width: '100%', marginBottom: '12px' }}
-          value={this.state.confirmPassword}
-          errorText={this.state.confirmPasswordError}
-          onChange={this.handleUpdateConfirmPassword}
-        />
-        <RaisedButton
-          label={this.state.submitted ? 'Working ...' : 'Register'}
-          primary
-          keyboardFocused
-          fullWidth
-          disabled={this.anyInvalid || this.state.submitted}
-          onClick={this.handleSubmit}
-        />
+          <TextField
+            hintText="Email"
+            type="email"
+            name="email"
+            id="email"
+            style={{ width: '100%', marginBottom: '12px' }}
+            value={this.state.email}
+            errorText={this.state.emailError}
+            onChange={this.handleUpdateEmail}
+            onBlur={this.validateEmail}
+          />
+          <TextField
+            hintText="Password"
+            type="password"
+            name="password"
+            id="password"
+            style={{ width: '100%', marginBottom: '12px' }}
+            value={this.state.password}
+            errorText={this.state.passwordError}
+
+            onChange={e => this.setState({ password: e.target.value })}
+          />
+          <TextField
+            hintText="Confirm Password"
+            type="password"
+            style={{ width: '100%', marginBottom: '12px' }}
+            value={this.state.confirmPassword}
+            errorText={this.state.confirmPasswordError}
+            onChange={this.handleUpdateConfirmPassword}
+          />
+          <RaisedButton
+            label={this.state.submitted ? 'Working ...' : 'Register'}
+            primary
+            keyboardFocused
+            fullWidth
+            disabled={this.anyInvalid || this.state.submitted}
+            onClick={this.handleSubmit}
+          />
+        </form>
         <div style={{ textAlign: 'center', padding: '12px' }}>
             Aldready a member ? <a href="register" onClick={this.handleChangeType}>Login.</a>
         </div>
